@@ -18,17 +18,10 @@ class DeviceUpdateView(generics.UpdateAPIView):
     serializer_class = DeviceSerializer
     lookup_field = 'device_id'  # 通过 device_id 查找设备进行更新
 
-class DeviceGetView(generics.ListAPIView):
+class DeviceGetView(generics.RetrieveAPIView):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
     lookup_field = 'device_id'  # 通过 device_id 查找设备进行更新
-
-    def get_queryset(self):
-        print("KWARGS:", self.kwargs)  # 检查接收到的参数
-        device_id = self.kwargs.get('device_id')
-        if device_id:
-            return Device.objects.filter(device_id=device_id)
-        return Device.objects.all() # 如果没有提供 device_id，则返回所有设备
     
 class DeviceListView(generics.ListAPIView):
     queryset = Device.objects.all()

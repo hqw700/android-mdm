@@ -7,6 +7,6 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 // http://127.0.0.1:8000/api/devices/list/all/
-export const getDevices = () => api.get('/list/all/');
-export const getDeviceDetail = (device_id) => api.get(`/${device_id}/`);
-export const lockDevice = (device_id) => api.post(`/${device_id}/lock_device/`);
+export const getDevices = () => api.get('list/all/');
+export const getDeviceDetail = (device_id) => api.get(`${device_id}/`);
+export const lockDevice = (device_id) => api.post(`${device_id}/lock_device/`);

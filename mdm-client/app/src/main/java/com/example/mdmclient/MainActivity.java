@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.mdmclient.BuildConfig;
 import com.example.mdmclient.network.ApiService;
 import com.example.mdmclient.network.DeviceRegisterRequest;
 import com.example.mdmclient.network.DeviceRegisterResponse;
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     // 设备注册方法，将在第4步实现
     private void registerDevice() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.5.9:8000/")
+                .baseUrl(BuildConfig.API_BASE_URL)
                 .addConverterFactory(MoshiConverterFactory.create())
                 .build();
 

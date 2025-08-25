@@ -16,13 +16,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
+        debug {
+            // API address for development
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.5.84:8000/\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // TODO: Replace with your production server address
+            buildConfigField("String", "API_BASE_URL", "https://your-production-server.com/api/")
         }
     }
     compileOptions {

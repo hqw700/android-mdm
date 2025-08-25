@@ -1,1 +1,5 @@
 db.sqlite3
+.env
+devices/__pycache__
+devices/migrations/__pycache__
+mdm_server/__pycache__

@@ -14,6 +14,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["JPUSH_PKGNAME"] = applicationId!!
+        manifestPlaceholders["JPUSH_APPKEY"] = "e25789a4daa2dd5dfd0e92ad"
+        manifestPlaceholders["JPUSH_CHANNEL"] = "developer-default"
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     buildFeatures {
@@ -42,7 +50,7 @@ android {
 }
 
 dependencies {
-
+    implementation(libs.jiguang)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

@@ -21,6 +21,7 @@ retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref =
 retrofit2-converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit2" }
 moshi = { group = "com.squareup.moshi", name = "moshi", version = "1.15.0" }
 moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version = "1.15.0" }
+jiguang = { group = "cn.jiguang.sdk", name = "jpush", version = "5.5.3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -8,6 +8,7 @@
         tools:ignore="ProtectedPermissions" />
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -38,6 +39,23 @@
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.DEVICE_ADMIN_DISABLED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".jpush.UserService"
+            android:process=":pushcore"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="cn.jiguang.user.service.action" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".jpush.PushMessageService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="cn.jpush.android.intent.SERVICE_MESSAGE" />
+                <category android:name="${applicationId}"></category>
             </intent-filter>
         </receiver>
     </application>

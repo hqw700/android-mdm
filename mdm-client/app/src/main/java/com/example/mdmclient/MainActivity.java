@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -21,6 +22,7 @@ import com.example.mdmclient.network.DeviceRegisterRequest;
 import com.example.mdmclient.network.DeviceRegisterResponse;
 import com.example.mdmclient.utils.DeviceUtils;
 
+import cn.jpush.android.api.JPushInterface;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -29,7 +31,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
-
+    private static final String TAG = "mdm";
 
     private static final int ADMIN_REQUEST_CODE = 1;
     private DevicePolicyManager devicePolicyManager;
@@ -48,6 +50,11 @@ public class MainActivity extends AppCompatActivity {
 
         devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         componentName = new ComponentName(this, MyDeviceAdminReceiver.class);
+
+        TextView textView = findViewById(R.id.textView);
+
+        textView.setText("RegistrationID: " +  JPushInterface.getRegistrationID(this));
+        Log.d(TAG, "RegistrationID: " + JPushInterface.getRegistrationID(this));
 
         // 检查是否已激活设备管理员权限
         if (!devicePolicyManager.isAdminActive(componentName)) {
@@ -91,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         // 获取设备唯一标识，这里使用Build.SERIAL来模拟，在实际应用中要谨慎
         String device_id = DeviceUtils.getDeviceSerial(this);
         String deviceName = Build.BRAND;
-        String fcm_token = "token";
+        String push_token = JPushInterface.getRegistrationID(this);
         String model = Build.MODEL;
         String ip_addr = DeviceUtils.getIPAddress();
         String mac_addr = DeviceUtils.getMacAddress();
@@ -99,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         String software_version = "1.0.0";
         //String device_id, String name, String fcm_token, String model, String ip_address,
         // String mac_address, String os_version, String software_version
-        DeviceRegisterRequest request = new DeviceRegisterRequest(device_id, deviceName, fcm_token,
+        DeviceRegisterRequest request = new DeviceRegisterRequest(device_id, deviceName, push_token,
                 model, ip_addr, mac_addr, os_version, software_version);
 
         // 使用异步任务来执行网络请求

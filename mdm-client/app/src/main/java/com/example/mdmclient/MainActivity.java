@@ -23,6 +23,7 @@ import com.example.mdmclient.network.DeviceRegisterResponse;
 import com.example.mdmclient.utils.DeviceUtils;
 
 import cn.jpush.android.api.JPushInterface;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -30,12 +31,12 @@ import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final String TAG = "mdm";
+    private static final String TAG = "mdm-main";
 
     private static final int ADMIN_REQUEST_CODE = 1;
     private DevicePolicyManager devicePolicyManager;
     private ComponentName componentName;
+    private ApiService apiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +52,12 @@ public class MainActivity extends AppCompatActivity {
         devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         componentName = new ComponentName(this, MyDeviceAdminReceiver.class);
 
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BuildConfig.API_BASE_URL)
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build();
+        apiService = retrofit.create(ApiService.class);
+
         TextView textView = findViewById(R.id.textView);
 
         textView.setText("RegistrationID: " +  JPushInterface.getRegistrationID(this));
@@ -61,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             requestDeviceAdmin();
         } else {
             // 权限已激活，可以进行设备注册
-            registerDevice();
+            checkDeviceRegistration();
         }
     }
 
@@ -78,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == ADMIN_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 // 用户已授予权限，可以进行设备注册
-                registerDevice();
+                checkDeviceRegistration();
             } else {
                 // 用户拒绝授予权限，可以提示用户或退出应用
                 Toast.makeText(this, "未授予权限，部分功能不可用", Toast.LENGTH_SHORT).show();
@@ -86,15 +93,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void checkDeviceRegistration() {
+        String deviceId = DeviceUtils.getDeviceSerial(this);
+        apiService.getDevice(deviceId).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // 200 OK, device is already registered
+                    Toast.makeText(MainActivity.this, "设备已注册", Toast.LENGTH_LONG).show();
+                } else if (response.code() == 404) {
+                    // 404 Not Found, device is not registered
+                    registerDevice();
+                } else {
+                    Toast.makeText(MainActivity.this, "检查设备状态失败: " + response.code(), Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "检查设备状态失败: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     // 设备注册方法，将在第4步实现
     private void registerDevice() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BuildConfig.API_BASE_URL)
-                .addConverterFactory(MoshiConverterFactory.create())
-                .build();
-
-        ApiService apiService = retrofit.create(ApiService.class);
-
         // 获取设备唯一标识，这里使用Build.SERIAL来模拟，在实际应用中要谨慎
         String device_id = DeviceUtils.getDeviceSerial(this);
         String deviceName = Build.BRAND;
@@ -114,18 +137,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<DeviceRegisterResponse> call, Response<DeviceRegisterResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Log.d("huangqw2", "onResponse: " + response.body().message);
+                    Log.d(TAG, "onResponse: " + response.body().message);
                     // 注册成功，可以保存设备ID到本地
                     Toast.makeText(MainActivity.this, "注册成功: " + response.body().message, Toast.LENGTH_LONG).show();
                 } else {
-                    Log.d("huangqw2", "onResponse: " + response.code());
+                    Log.d(TAG, "onResponse: " + response.code());
                     Toast.makeText(MainActivity.this, "注册失败: " + response.code(), Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<DeviceRegisterResponse> call, Throwable t) {
-                Log.d("huangqw2", "onFailure: " + t.getMessage());
+                Log.d(TAG, "onFailure: " + t.getMessage());
                 Toast.makeText(MainActivity.this, "注册失败: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });

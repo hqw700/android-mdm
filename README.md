@@ -1,49 +1,107 @@
+# Android MDM (Mobile Device Management)
+
 - **THIS PROJECT CREATE BY GEMINI PRO**
 
-## create env
-```
-python -m venv mdm_env
-cd mdm_env
-source bin/activate  # macOS/Linux
-pip install django djangorestframework django-environ pip3 install django-cors-headers dotenv
-git clone https://github.com/hqw700/android-mdm
-```
-- add `.env` file
-```
-# Django Settings
-# NOTE: For production, generate a new, truly random secret key.
-DJANGO_SECRET_KEY='django-insecure-iyqeid+1e4b^e7p0a3y+3xs7b%cnl)zh9nw&zrce-oiuk^9aam'
+This project is a simple Mobile Device Management (MDM) solution for Android devices, built with Django (backend), React (frontend), and a native Android client app.
 
-# Set to False in production
-DEBUG=True
+## Features
 
-# Comma-separated list of allowed hosts for Django. 
-# Add your server's IP or domain here when deploying.
-ALLOWED_HOSTS=127.0.0.1,localhost,192.168.5.84
+*   Device registration and management
+*   Remote device locking
+*   Real-time online status check using JPush
+*   View device information, including tags and alias from JPush
 
-# Comma-separated list of allowed origins for CORS. 
-# Add your frontend's URL here when deploying.
-CORS_ALLOWED_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,http://192.168.5.84:3000
-```
+## Project Structure
 
-## start server
-```
-cd android-mdm
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
-```
+*   `mdm_server`: Django backend
+*   `mdm-frontend`: React frontend
+*   `mdm-client`: Android client app
 
-## start frontend
-```
-cd mdm-frontend
-npm install react-scripts
-npm start
-```
-open `http://127.0.0.1:3000/`
+## Setup and Installation
 
-## install app
-```
-cd mdm-client
-./gradlew assemble
-adb install ./app/build/outputs/apk/debug/app-debug.apk
-```
+### 1. Backend Setup (Django)
+
+1.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv mdm_env
+    source mdm_env/bin/activate  # On Windows, use `mdm_env\Scripts\activate`
+    ```
+
+2.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/hqw700/android-mdm.git
+    cd android-mdm
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Configure environment variables:**
+    Create a `.env` file in the project root directory and add the following:
+    ```
+    # Django Settings
+    DJANGO_SECRET_KEY='your-secret-key'
+    DEBUG=True
+    ALLOWED_HOSTS=127.0.0.1,localhost
+    CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+
+    # JPush Settings
+    JPUSH_APP_KEY=your_jpush_app_key
+    JPUSH_MASTER_SECRET=your_jpush_master_secret
+    ```
+    **Note:** Replace the placeholder values with your actual Django secret key and JPush credentials.
+
+5.  **Run database migrations:**
+    ```bash
+    python manage.py migrate
+    ```
+
+6.  **Start the backend server:**
+    ```bash
+    python manage.py runserver 0.0.0.0:8000
+    ```
+
+### 2. Frontend Setup (React)
+
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd mdm-frontend
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the frontend development server:**
+    ```bash
+    npm start
+    ```
+    The frontend will be available at `http://localhost:3000`.
+
+### 3. Android Client Setup
+
+1.  **Navigate to the Android client directory:**
+    ```bash
+    cd mdm-client
+    ```
+
+2.  **Build the APK:**
+    ```bash
+    ./gradlew assembleDebug
+    ```
+
+3.  **Install the APK on your device:**
+    ```bash
+    adb install app/build/outputs/apk/debug/app-debug.apk
+    ```
+
+## Remote Control Commands
+
+You can send commands to the devices using the API. The following commands are currently supported:
+
+*   **Remote Lock:**
+    -   **Endpoint:** `POST /api/devices/{registration_id}/command/`
+    -   **Body:** `{"command": "lock"}`

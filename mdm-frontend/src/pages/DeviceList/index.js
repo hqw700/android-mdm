@@ -1,8 +1,10 @@
 // src/pages/DeviceList/index.js
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message } from 'antd';
-import { getDevices, lockDevice } from '../../api/deviceService';
+import { Table, Button, Space, message, Modal } from 'antd';
+import { getDevices, lockDevice, deleteDevice } from '../../api/deviceService';
 import { useNavigate } from 'react-router-dom';
+
+const { confirm } = Modal;
 
 const DeviceList = () => {
   const [devices, setDevices] = useState([]);
@@ -17,9 +19,7 @@ const DeviceList = () => {
     setLoading(true);
     try {
       const response = await getDevices();
-      console.log('API 返回的数据:', response.data); // 打印返回的数据
       setDevices(response.data);
-      console.log('状态已更新:', devices); // 注意：这里可能不会立即显示最新状态
     } catch (error) {
       message.error('获取设备列表失败');
     }
@@ -36,6 +36,29 @@ const DeviceList = () => {
     }
   };
 
+  const handleDeleteDevice = (deviceId) => {
+    confirm({
+      title: '确定要删除这个设备吗?',
+      content: `设备ID: ${deviceId}`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk() {
+        return new Promise(async (resolve, reject) => {
+          try {
+            await deleteDevice(deviceId);
+            message.success(`设备 ${deviceId} 已被删除`);
+            fetchDevices(); // Refresh the list
+            resolve();
+          } catch (error) {
+            message.error('删除设备失败');
+            reject(error);
+          }
+        });
+      },
+    });
+  };
+
   const columns = [
     { title: '终端ID', dataIndex: 'device_id', key: 'device_id' },
     { title: '设备名称', dataIndex: 'name', key: 'name' },
@@ -48,7 +71,8 @@ const DeviceList = () => {
       render: (_, record) => (
         <Space size="middle">
           <Button onClick={() => navigate(`/devices/${record.device_id}`)}>查看详情</Button>
-          <Button danger onClick={() => handleLockDevice(record.device_id)}>远程锁定</Button>
+          <Button onClick={() => handleLockDevice(record.device_id)}>远程锁定</Button>
+          <Button danger onClick={() => handleDeleteDevice(record.device_id)}>删除设备</Button>
         </Space>
       ),
     },

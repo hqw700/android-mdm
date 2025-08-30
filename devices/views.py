@@ -8,6 +8,7 @@ from .serializers import DeviceSerializer
 from django.conf import settings
 import requests
 import base64
+import json
 from rest_framework.decorators import api_view
 
 def get_jpush_device_status(registration_id):
@@ -89,3 +90,39 @@ def get_device_status(request, registration_id):
     if 'error' in status_data:
         return Response(status_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(status_data)
+
+@api_view(['POST'])
+def send_command_to_device(request, registration_id):
+    app_key = settings.JPUSH_APP_KEY
+    master_secret = settings.JPUSH_MASTER_SECRET
+
+    if not app_key or not master_secret or master_secret == 'YOUR_MASTER_SECRET':
+        return Response({'error': 'JPush credentials not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    command_data = request.data
+
+    url = 'https://api.jpush.cn/v3/push'
+    auth_string = f'{app_key}:{master_secret}'
+    base64_auth_string = base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
+
+    headers = {
+        'Authorization': f'Basic {base64_auth_string}',
+        'Content-Type': 'application/json'
+    }
+
+    payload = {
+        "platform": "all",
+        "audience": {
+            "registration_id": [registration_id]
+        },
+        "message": {
+            "msg_content": json.dumps(command_data)
+        }
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        return Response(response.json(), status=response.status_code)
+    except requests.exceptions.RequestException as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

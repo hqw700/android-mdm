@@ -9,6 +9,6 @@ const api = axios.create({
 // http://127.0.0.1:8000/api/devices/list/all/
 export const getDevices = () => api.get('list/all/');
 export const getDeviceDetail = (device_id) => api.get(`${device_id}/`);
-export const lockDevice = (device_id) => api.post(`${device_id}/lock_device/`);
 export const deleteDevice = (device_id) => api.delete(`${device_id}/delete/`);
 export const getDeviceStatus = (registration_id) => api.get(`${registration_id}/status/`);
+export const sendCommand = (registration_id, command) => api.post(`${registration_id}/command/`, command);

@@ -15,7 +15,7 @@ from .serializers import DeviceSerializer
 #     lookup_field = 'device_id'  # 通过 device_id 查找设备进行更新
 
 from django.urls import path
-from .views import DeviceRegisterView, DeviceUpdateView, DeviceGetView, DeviceListView, DeviceDeleteView, get_device_status
+from .views import DeviceRegisterView, DeviceUpdateView, DeviceGetView, DeviceListView, DeviceDeleteView, get_device_status, send_command_to_device
 
 urlpatterns = [
     path('register/', DeviceRegisterView.as_view(), name='device-register'),
@@ -24,4 +24,5 @@ urlpatterns = [
     path('list/all/', DeviceListView.as_view(), name='device-list-all'),  # http://127.0.0.1:8000/api/devices/list/all/
     path('<str:device_id>/delete/', DeviceDeleteView.as_view(), name='device-delete'),
     path('<str:registration_id>/status/', get_device_status, name='get_device_status'),
+    path('<str:registration_id>/command/', send_command_to_device, name='send_command_to_device'),
 ]

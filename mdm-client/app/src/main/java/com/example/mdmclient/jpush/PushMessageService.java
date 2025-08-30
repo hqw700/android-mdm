@@ -1,10 +1,17 @@
 package com.example.mdmclient.jpush;
 
 import android.app.Notification;
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+
+import com.example.mdmclient.MyDeviceAdminReceiver;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import cn.jpush.android.api.CmdMessage;
 import cn.jpush.android.api.CustomMessage;
@@ -19,11 +26,24 @@ public class PushMessageService extends JPushMessageReceiver {
     @Override
     public void onMessage(Context context, CustomMessage customMessage) {
         Log.i(TAG, "[onMessage] " + customMessage);
-//        Intent intent = new Intent("com.jiguang.demo.message");
-//        intent.putExtra("msg", customMessage.message);
-//        context.sendBroadcast(intent);
-
-
+        try {
+            JSONObject json = new JSONObject(customMessage.message);
+            String command = json.optString("command");
+            Log.i(TAG, "Received command: " + command);
+            if ("lock".equals(command)) {
+                Log.i(TAG, "Executing lock command");
+                DevicePolicyManager devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+                ComponentName componentName = new ComponentName(context, MyDeviceAdminReceiver.class);
+                if (devicePolicyManager.isAdminActive(componentName)) {
+                    Log.i(TAG, "Device admin is active, locking now.");
+                    devicePolicyManager.lockNow();
+                } else {
+                    Log.e(TAG, "Device admin is not active, cannot lock device.");
+                }
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to parse custom message", e);
+        }
     }
 
     @Override

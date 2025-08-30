@@ -1,7 +1,7 @@
 // src/pages/DeviceList/index.js
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, message, Modal, Tag } from 'antd';
-import { getDevices, lockDevice, deleteDevice } from '../../api/deviceService';
+import { getDevices, sendCommand, deleteDevice } from '../../api/deviceService';
 import { useNavigate } from 'react-router-dom';
 
 const { confirm } = Modal;
@@ -27,10 +27,10 @@ const DeviceList = () => {
   };
 
 
-  const handleLockDevice = async (deviceId) => {
+  const handleLockDevice = async (registrationId) => {
     try {
-      await lockDevice(deviceId);
-      message.success(`已向设备 ${deviceId} 发送远程锁定指令`);
+      await sendCommand(registrationId, { command: 'lock' });
+      message.success(`已向设备 ${registrationId} 发送远程锁定指令`);
     } catch (error) {
       message.error('发送远程锁定指令失败');
     }
@@ -93,8 +93,8 @@ const DeviceList = () => {
       render: (_, record) => (
         <Space size="middle">
           <Button onClick={() => navigate(`/devices/${record.device_id}`)}>查看详情</Button>
-          <Button onClick={() => handleLockDevice(record.device_id)}>远程锁定</Button>
-          <Button danger onClick={() => handleDeleteDevice(record.device_id)}>删除设备</Button>
+          <Button onClick={() => handleLockDevice(record.fcm_token)}>远程锁定</Button>
+          <Button danger onClick={() => handleDeleteDevice(record.device_id)}>远程删除</Button>
         </Space>
       ),
     },

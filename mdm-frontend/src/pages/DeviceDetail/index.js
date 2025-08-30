@@ -1,8 +1,8 @@
 // src/pages/DeviceDetail/index.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Spin, message, Button, Modal, Space } from 'antd';
-import { getDeviceDetail, deleteDevice } from '../../api/deviceService';
+import { Card, Descriptions, Spin, message, Button, Modal, Space, Tag } from 'antd';
+import { getDeviceDetail, deleteDevice, getDeviceStatus } from '../../api/deviceService';
 
 const { confirm } = Modal;
 
@@ -11,6 +11,8 @@ const DeviceDetail = () => {
   const navigate = useNavigate();
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [onlineStatus, setOnlineStatus] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
     // 使用一个标志位来防止组件卸载后仍然更新状态
@@ -66,6 +68,24 @@ const DeviceDetail = () => {
     });
   };
 
+  const handleCheckStatus = async () => {
+    if (!device || !device.fcm_token) {
+      message.error('无法获取设备 Registration ID');
+      return;
+    }
+    setStatusLoading(true);
+    try {
+      const response = await getDeviceStatus(device.fcm_token);
+      // A successful response means the device is known to JPush.
+      setOnlineStatus({ online: true, ...response.data });
+    } catch (error) {
+      message.error('查询在线状态失败');
+      setOnlineStatus({ online: false });
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   if (loading) {
     return <Spin tip="加载中..." />;
   }
@@ -77,6 +97,7 @@ const DeviceDetail = () => {
   return (
     <Card title="设备详情" style={{ width: '100%' }} extra={
       <Space>
+        <Button onClick={handleCheckStatus} loading={statusLoading}>查询在线状态</Button>
         <Button danger onClick={handleDeleteDevice}>删除设备</Button>
       </Space>
     }>
@@ -89,6 +110,19 @@ const DeviceDetail = () => {
         <Descriptions.Item label="操作系统版本">{device.os_version}</Descriptions.Item>
         <Descriptions.Item label="软件版本">{device.software_version}</Descriptions.Item>
         <Descriptions.Item label="状态">{device.status}</Descriptions.Item>
+        {onlineStatus && (
+          <>
+            <Descriptions.Item label="JPush在线状态" span={2}>
+              {onlineStatus.online ? <Tag color="green">在线</Tag> : <Tag color="red">离线</Tag>}
+            </Descriptions.Item>
+            {onlineStatus.alias && (
+              <Descriptions.Item label="JPush Alias">{onlineStatus.alias}</Descriptions.Item>
+            )}
+            {onlineStatus.tags && (
+              <Descriptions.Item label="JPush Tags">{onlineStatus.tags.join(', ')}</Descriptions.Item>
+            )}
+          </>
+        )}
       </Descriptions>
     </Card>
   );

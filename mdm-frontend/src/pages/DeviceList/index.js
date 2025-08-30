@@ -1,6 +1,6 @@
 // src/pages/DeviceList/index.js
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Modal } from 'antd';
+import { Table, Button, Space, message, Modal, Tag } from 'antd';
 import { getDevices, lockDevice, deleteDevice } from '../../api/deviceService';
 import { useNavigate } from 'react-router-dom';
 
@@ -64,6 +64,28 @@ const DeviceList = () => {
     { title: '设备名称', dataIndex: 'name', key: 'name' },
     { title: 'IP地址', dataIndex: 'ip_address', key: 'ip_address' },
     { title: '状态', dataIndex: 'status', key: 'status' },
+    { 
+      title: 'JPush状态', 
+      dataIndex: 'jpush_status', 
+      key: 'jpush_status', 
+      render: (status) => {
+        if (!status || status.error) {
+          return <Tag color="red">离线</Tag>;
+        }
+        return <Tag color="green">在线</Tag>;
+      }
+    },
+    { 
+      title: 'JPush Alias', 
+      dataIndex: ['jpush_status', 'alias'], 
+      key: 'jpush_alias'
+    },
+    { 
+      title: 'JPush Tags', 
+      dataIndex: ['jpush_status', 'tags'], 
+      key: 'jpush_tags',
+      render: (tags) => tags && tags.join(', ')
+    },
     { title: '最后心跳', dataIndex: 'last_heartbeat', key: 'last_heartbeat' },
     {
       title: '操作',

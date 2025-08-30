@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
     private void registerDevice() {
         // 获取设备唯一标识，这里使用Build.SERIAL来模拟，在实际应用中要谨慎
         String device_id = DeviceUtils.getDeviceSerial(this);
-        String deviceName = Build.BRAND;
+        String deviceName = Build.DEVICE;
         String push_token = JPushInterface.getRegistrationID(this);
         String model = Build.MODEL;
         String ip_addr = DeviceUtils.getIPAddress();

@@ -11,3 +11,4 @@ export const getDevices = () => api.get('list/all/');
 export const getDeviceDetail = (device_id) => api.get(`${device_id}/`);
 export const lockDevice = (device_id) => api.post(`${device_id}/lock_device/`);
 export const deleteDevice = (device_id) => api.delete(`${device_id}/delete/`);
+export const getDeviceStatus = (registration_id) => api.get(`${registration_id}/status/`);

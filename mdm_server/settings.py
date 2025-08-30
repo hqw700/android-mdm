@@ -135,3 +135,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS_str = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_str.split(',') if origin.strip()]
+
+# JPush settings
+JPUSH_APP_KEY = os.getenv('JPUSH_APP_KEY')
+JPUSH_MASTER_SECRET = os.getenv('JPUSH_MASTER_SECRET')

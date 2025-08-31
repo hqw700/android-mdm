@@ -1,6 +1,6 @@
 // src/pages/DeviceList/index.js
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Modal, Tag, Dropdown, Menu, Form, Input, Select } from 'antd';
+import { Table, Button, Space, message, Modal, Tag, Dropdown, Form, Input, Select } from 'antd';
 import { getDevices, sendCommand, deleteDevice } from '../../api/deviceService';
 import { useNavigate } from 'react-router-dom';
 import { DownOutlined } from '@ant-design/icons';
@@ -73,7 +73,11 @@ const DeviceList = () => {
 
   const handleGroupActionOk = () => {
     form.validateFields().then(values => {
-      const { target_type, target, command } = values;
+      let { target_type, target, command } = values;
+      if (target_type === 'selected_devices') {
+        target = selectedRowKeys.join(',');
+        target_type = 'registration_id';
+      }
       const payload = {
         target_type,
         target,
@@ -173,7 +177,7 @@ const DeviceList = () => {
         columns={columns}
         dataSource={devices}
         loading={loading} 
-        rowKey="device_id" 
+        rowKey="fcm_token" 
       />
       <Modal
         title="批量操作"
@@ -184,6 +188,7 @@ const DeviceList = () => {
         <Form form={form} layout="vertical">
           <Form.Item name="target_type" label="目标类型" rules={[{ required: true }]}>
             <Select placeholder="选择目标类型">
+              <Option value="selected_devices">已选设备</Option>
               <Option value="tag">标签</Option>
               <Option value="alias">别名</Option>
               <Option value="broadcast">广播</Option>

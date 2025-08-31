@@ -10,6 +10,7 @@ import requests
 import base64
 import json
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
 
 def get_jpush_device_status(registration_id):
     app_key = settings.JPUSH_APP_KEY
@@ -103,8 +104,9 @@ def send_command(request):
     target = request.data.get('target')
     command_data = request.data.get('command')
 
-    if not all([target_type, target, command_data]):
-        return Response({'error': 'Missing parameters'}, status=status.HTTP_400_BAD_REQUEST)
+    if not all([target_type, command_data]):
+        # Include what the server actually received to aid browser-side debugging
+        return Response({'error': 'Missing parameters', 'received': request.data}, status=status.HTTP_400_BAD_REQUEST)
 
     audience = {}
     if target_type in ['registration_id', 'tag', 'alias']:

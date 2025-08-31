@@ -51,13 +51,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:name=".jpush.PushMessageService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="cn.jpush.android.intent.SERVICE_MESSAGE" />
-                <category android:name="${applicationId}"></category>
-            </intent-filter>
-        </receiver>
+        
     </application>
 
 </manifest>

@@ -37,6 +37,7 @@ ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_str.split(',') if host.s
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'devices',
     'corsheaders',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +80,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mdm_server.wsgi.application'
+ASGI_APPLICATION = 'mdm_server.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
 
 
 # Database
@@ -137,7 +153,3 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_str.sp
 
 # Allow credentials (cookies) from CORS origins if frontend sends them
 CORS_ALLOW_CREDENTIALS = True
-
-# JPush settings
-JPUSH_APP_KEY = os.getenv('JPUSH_APP_KEY')
-JPUSH_MASTER_SECRET = os.getenv('JPUSH_MASTER_SECRET')

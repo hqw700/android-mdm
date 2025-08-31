@@ -99,30 +99,12 @@ const DeviceList = () => {
   const columns = [
     { title: '终端ID', dataIndex: 'device_id', key: 'device_id' },
     { title: '设备名称', dataIndex: 'name', key: 'name' },
+    { title: '在线状态', dataIndex: 'online_status', key: 'online_status', render: (online) => (
+        online ? <Tag color="green">在线</Tag> : <Tag color="red">离线</Tag>
+      ) 
+    },
     { title: 'IP地址', dataIndex: 'ip_address', key: 'ip_address' },
     { title: '状态', dataIndex: 'status', key: 'status' },
-    { 
-      title: 'JPush状态', 
-      dataIndex: 'jpush_status', 
-      key: 'jpush_status', 
-      render: (status) => {
-        if (!status || status.error) {
-          return <Tag color="red">离线</Tag>;
-        }
-        return <Tag color="green">在线</Tag>;
-      }
-    },
-    { 
-      title: 'JPush Alias', 
-      dataIndex: ['jpush_status', 'alias'], 
-      key: 'jpush_alias'
-    },
-    { 
-      title: 'JPush Tags', 
-      dataIndex: ['jpush_status', 'tags'], 
-      key: 'jpush_tags',
-      render: (tags) => tags && tags.join(', ')
-    },
     { title: '最后心跳', dataIndex: 'last_heartbeat', key: 'last_heartbeat' },
     {
       title: '操作',
@@ -144,7 +126,7 @@ const DeviceList = () => {
               } else {
                 const payload = {
                   target_type: 'registration_id',
-                  target: record.fcm_token,
+                  target: record.device_id,
                   command: { command: key },
                 };
                 handleCommand(payload);
@@ -177,7 +159,7 @@ const DeviceList = () => {
         columns={columns}
         dataSource={devices}
         loading={loading} 
-        rowKey="fcm_token" 
+        rowKey="device_id" 
       />
       <Modal
         title="批量操作"
@@ -189,13 +171,8 @@ const DeviceList = () => {
           <Form.Item name="target_type" label="目标类型" rules={[{ required: true }]}>
             <Select placeholder="选择目标类型">
               <Option value="selected_devices">已选设备</Option>
-              <Option value="tag">标签</Option>
-              <Option value="alias">别名</Option>
               <Option value="broadcast">广播</Option>
             </Select>
-          </Form.Item>
-          <Form.Item name="target" label="目标">
-            <Input placeholder="输入目标 (例如, 标签名)" />
           </Form.Item>
           <Form.Item name="command" label="指令" rules={[{ required: true }]}>
             <Select placeholder="选择指令">

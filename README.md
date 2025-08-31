@@ -46,12 +46,8 @@ This project is a simple Mobile Device Management (MDM) solution for Android dev
     DEBUG=True
     ALLOWED_HOSTS=127.0.0.1,localhost
     CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-
-    # JPush Settings
-    JPUSH_APP_KEY=your_jpush_app_key
-    JPUSH_MASTER_SECRET=your_jpush_master_secret
     ```
-    **Note:** Replace the placeholder values with your actual Django secret key and JPush credentials.
+    **Note:** Replace the placeholder values with your actual Django secret key.
 
 5.  **Run database migrations:**
     ```bash
@@ -62,6 +58,8 @@ This project is a simple Mobile Device Management (MDM) solution for Android dev
     ```bash
     python manage.py runserver 0.0.0.0:8000
     ```
+
+    **Note on Channel Layers:** For development, this project uses the in-memory channel layer. For production, you should set up a Redis server and configure the `CHANNEL_LAYERS` setting in `mdm_server/settings.py` to use `channels_redis.core.RedisChannelLayer`.
 
 ### 2. Frontend Setup (React)
 

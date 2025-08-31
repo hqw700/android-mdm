@@ -20,13 +20,20 @@ import com.example.mdmclient.BuildConfig;
 import com.example.mdmclient.network.ApiService;
 import com.example.mdmclient.network.DeviceRegisterRequest;
 import com.example.mdmclient.network.DeviceRegisterResponse;
+import com.example.mdmclient.network.WebSocketManager;
 import com.example.mdmclient.utils.DeviceUtils;
 
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import cn.jpush.android.api.JPushInterface;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import retrofit2.Call;
 import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
@@ -37,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private DevicePolicyManager devicePolicyManager;
     private ComponentName componentName;
     private ApiService apiService;
+    private WebSocketManager webSocketManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +80,66 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void startWebSocket() {
+        String deviceId = DeviceUtils.getDeviceSerial(this);
+        String wsUrl = BuildConfig.API_BASE_URL.replace("http", "ws") + "ws/devices/" + deviceId + "/";
+        webSocketManager = new WebSocketManager(wsUrl, new WebSocketListener() {
+            @Override
+            public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
+                super.onOpen(webSocket, response);
+                Log.d(TAG, "WebSocket opened");
+            }
+
+            @Override
+            public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
+                super.onMessage(webSocket, text);
+                Log.d(TAG, "WebSocket onMessage: " + text);
+                try {
+                    JSONObject json = new JSONObject(text);
+                    String command = json.optString("command");
+                    handleCommand(command);
+                } catch (JSONException e) {
+                    Log.e(TAG, "Failed to parse command", e);
+                }
+            }
+
+            @Override
+            public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
+                super.onClosed(webSocket, code, reason);
+                Log.d(TAG, "WebSocket closed");
+            }
+
+            @Override
+            public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @NotNull Response response) {
+                super.onFailure(webSocket, t, response);
+                Log.e(TAG, "WebSocket failure", t);
+            }
+        });
+        webSocketManager.start();
+    }
+
+    private void handleCommand(String command) {
+        if (command == null) return;
+
+        switch (command) {
+            case "lock":
+                Log.i(TAG, "Executing lock command");
+                devicePolicyManager.lockNow();
+                break;
+            case "disable_camera":
+                Log.i(TAG, "Executing disable_camera command");
+                devicePolicyManager.setCameraDisabled(componentName, true);
+                break;
+            case "enable_camera":
+                Log.i(TAG, "Executing enable_camera command");
+                devicePolicyManager.setCameraDisabled(componentName, false);
+                break;
+            default:
+                Log.w(TAG, "Unknown command: " + command);
+                break;
+        }
+    }
+
     private void requestDeviceAdmin() {
         Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
         intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName);
@@ -96,11 +164,13 @@ public class MainActivity extends AppCompatActivity {
     private void checkDeviceRegistration() {
         String deviceId = DeviceUtils.getDeviceSerial(this);
         apiService.getDevice(deviceId).enqueue(new Callback<ResponseBody>() {
+
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     // 200 OK, device is already registered
                     Toast.makeText(MainActivity.this, "设备已注册", Toast.LENGTH_LONG).show();
+                    startWebSocket();
                 } else if (response.code() == 404) {
                     // 404 Not Found, device is not registered
                     registerDevice();
@@ -134,12 +204,14 @@ public class MainActivity extends AppCompatActivity {
 
         // 使用异步任务来执行网络请求
         apiService.registerDevice(request).enqueue(new Callback<DeviceRegisterResponse>() {
+
             @Override
-            public void onResponse(Call<DeviceRegisterResponse> call, Response<DeviceRegisterResponse> response) {
+            public void onResponse(Call<DeviceRegisterResponse> call, retrofit2.Response<DeviceRegisterResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Log.d(TAG, "onResponse: " + response.body().message);
+                    Log.d(TAG, "onResponse: " + response.message());
                     // 注册成功，可以保存设备ID到本地
-                    Toast.makeText(MainActivity.this, "注册成功: " + response.body().message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "注册成功: " + response.message(), Toast.LENGTH_LONG).show();
+                    startWebSocket();
                 } else {
                     Log.d(TAG, "onResponse: " + response.code());
                     Toast.makeText(MainActivity.this, "注册失败: " + response.code(), Toast.LENGTH_LONG).show();
@@ -154,4 +226,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (webSocketManager != null) {
+            webSocketManager.stop();
+        }
+    }
 }

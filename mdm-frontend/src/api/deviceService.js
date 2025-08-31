@@ -11,4 +11,4 @@ export const getDevices = () => api.get('list/all/');
 export const getDeviceDetail = (device_id) => api.get(`${device_id}/`);
 export const deleteDevice = (device_id) => api.delete(`${device_id}/delete/`);
 export const getDeviceStatus = (registration_id) => api.get(`${registration_id}/status/`);
-export const sendCommand = (registration_id, command) => api.post(`${registration_id}/command/`, command);
+export const sendCommand = (commandPayload) => api.post('command/', commandPayload);

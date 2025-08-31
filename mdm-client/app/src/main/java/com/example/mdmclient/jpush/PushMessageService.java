@@ -30,16 +30,31 @@ public class PushMessageService extends JPushMessageReceiver {
             JSONObject json = new JSONObject(customMessage.message);
             String command = json.optString("command");
             Log.i(TAG, "Received command: " + command);
-            if ("lock".equals(command)) {
-                Log.i(TAG, "Executing lock command");
-                DevicePolicyManager devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-                ComponentName componentName = new ComponentName(context, MyDeviceAdminReceiver.class);
-                if (devicePolicyManager.isAdminActive(componentName)) {
-                    Log.i(TAG, "Device admin is active, locking now.");
+
+            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+            ComponentName componentName = new ComponentName(context, MyDeviceAdminReceiver.class);
+
+            if (!devicePolicyManager.isAdminActive(componentName)) {
+                Log.e(TAG, "Device admin is not active, cannot execute command.");
+                return;
+            }
+
+            switch (command) {
+                case "lock":
+                    Log.i(TAG, "Executing lock command");
                     devicePolicyManager.lockNow();
-                } else {
-                    Log.e(TAG, "Device admin is not active, cannot lock device.");
-                }
+                    break;
+                case "disable_camera":
+                    Log.i(TAG, "Executing disable_camera command");
+                    devicePolicyManager.setCameraDisabled(componentName, true);
+                    break;
+                case "enable_camera":
+                    Log.i(TAG, "Executing enable_camera command");
+                    devicePolicyManager.setCameraDisabled(componentName, false);
+                    break;
+                default:
+                    Log.w(TAG, "Unknown command: " + command);
+                    break;
             }
         } catch (JSONException e) {
             Log.e(TAG, "Failed to parse custom message", e);

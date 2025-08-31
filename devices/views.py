@@ -92,14 +92,27 @@ def get_device_status(request, registration_id):
     return Response(status_data)
 
 @api_view(['POST'])
-def send_command_to_device(request, registration_id):
+def send_command(request):
     app_key = settings.JPUSH_APP_KEY
     master_secret = settings.JPUSH_MASTER_SECRET
 
     if not app_key or not master_secret or master_secret == 'YOUR_MASTER_SECRET':
         return Response({'error': 'JPush credentials not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    command_data = request.data
+    target_type = request.data.get('target_type')
+    target = request.data.get('target')
+    command_data = request.data.get('command')
+
+    if not all([target_type, target, command_data]):
+        return Response({'error': 'Missing parameters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    audience = {}
+    if target_type in ['registration_id', 'tag', 'alias']:
+        audience[target_type] = [t.strip() for t in target.split(',')]
+    elif target_type == 'broadcast':
+        audience = 'all'
+    else:
+        return Response({'error': 'Invalid target_type'}, status=status.HTTP_400_BAD_REQUEST)
 
     url = 'https://api.jpush.cn/v3/push'
     auth_string = f'{app_key}:{master_secret}'
@@ -112,9 +125,7 @@ def send_command_to_device(request, registration_id):
 
     payload = {
         "platform": "all",
-        "audience": {
-            "registration_id": [registration_id]
-        },
+        "audience": audience,
         "message": {
             "msg_content": json.dumps(command_data)
         }

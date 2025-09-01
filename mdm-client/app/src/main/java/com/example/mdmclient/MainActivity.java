@@ -1,9 +1,13 @@
 package com.example.mdmclient;
 
+import android.Manifest;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,7 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -41,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "mdm-main";
 
     private static final int ADMIN_REQUEST_CODE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 2;
     private DevicePolicyManager devicePolicyManager;
     private ComponentName componentName;
     private ApiService apiService;
@@ -56,6 +63,10 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        }
 
         devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         componentName = new ComponentName(this, MyDeviceAdminReceiver.class);
@@ -134,9 +145,68 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "Executing enable_camera command");
                 devicePolicyManager.setCameraDisabled(componentName, false);
                 break;
+            case "get_location":
+                Log.i(TAG, "Executing get_location command");
+                requestLocation();
+                break;
             default:
                 Log.w(TAG, "Unknown command: " + command);
                 break;
+        }
+    }
+
+    private void requestLocation() {
+
+        sendLocation();
+    }
+
+    private void sendLocation() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "sendLocation: 无定位权限");
+            return;
+        }
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (location == null) {
+            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+        if (location == null) {
+            location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+        }
+        if (location != null && webSocketManager != null) {
+            JSONObject locationJson = new JSONObject();
+            try {
+                locationJson.put("type", "location_update");
+                locationJson.put("latitude", location.getLatitude());
+                locationJson.put("longitude", location.getLongitude());
+                webSocketManager.sendMessage(locationJson.toString());
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to create location JSON", e);
+            }
+        } else {
+            Log.e(TAG, "sendLocation: 无法获取位置:" + (location == null)
+                    + ", 或WebSocket未连接: " + (webSocketManager == null));
+            JSONObject locationJson = new JSONObject();
+            try {
+                locationJson.put("type", "location_update");
+                locationJson.put("latitude", "22.2");
+                locationJson.put("longitude", "33.3");
+                webSocketManager.sendMessage(locationJson.toString());
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to create location JSON", e);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                sendLocation();
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

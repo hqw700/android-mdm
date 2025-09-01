@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Spin, message, Button, Modal, Space, Tag } from 'antd';
-import { getDeviceDetail, deleteDevice, getDeviceStatus } from '../../api/deviceService';
+import { getDeviceDetail, deleteDevice, sendCommand } from '../../api/deviceService';
 
 const { confirm } = Modal;
 
@@ -11,38 +11,21 @@ const DeviceDetail = () => {
   const navigate = useNavigate();
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [onlineStatus, setOnlineStatus] = useState(null);
-  const [statusLoading, setStatusLoading] = useState(false);
+
+  const fetchDeviceDetail = async () => {
+    setLoading(true);
+    try {
+      const response = await getDeviceDetail(deviceId);
+      setDevice(response.data);
+    } catch (error) {
+      message.error('获取设备详情失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // 使用一个标志位来防止组件卸载后仍然更新状态
-    // 这有助于在严格模式下避免竞态条件和内存泄漏
-    let isMounted = true;
-
-    const fetchDeviceDetail = async () => {
-      setLoading(true);
-      try {
-        const response = await getDeviceDetail(deviceId);
-        if (isMounted) {
-          console.log('API 返回的数据:', response.data); // 保留用于调试
-          setDevice(response.data);
-        }
-      } catch (error) {
-        if (isMounted) {
-          message.error('获取设备详情失败');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchDeviceDetail();
-
-    return () => {
-      isMounted = false;
-    };
   }, [deviceId]);
 
   const handleDeleteDevice = () => {
@@ -68,22 +51,14 @@ const DeviceDetail = () => {
     });
   };
 
-  const handleCheckStatus = async () => {
-    if (!device || !device.fcm_token) {
-      message.error('无法获取设备 Registration ID');
-      return;
-    }
-    setStatusLoading(true);
-    try {
-      const response = await getDeviceStatus(device.fcm_token);
-      // A successful response means the device is known to JPush.
-      setOnlineStatus({ online: true, ...response.data });
-    } catch (error) {
-      message.error('查询在线状态失败');
-      setOnlineStatus({ online: false });
-    } finally {
-      setStatusLoading(false);
-    }
+  const handleGetLocation = async () => {
+    const payload = {
+      target_type: 'registration_id',
+      target: device.device_id,
+      command: { command: 'get_location' },
+    };
+    await sendCommand(payload);
+    message.info('获取位置指令已发送，请稍后刷新查看');
   };
 
   if (loading) {
@@ -97,7 +72,8 @@ const DeviceDetail = () => {
   return (
     <Card title="设备详情" style={{ width: '100%' }} extra={
       <Space>
-        <Button onClick={handleCheckStatus} loading={statusLoading}>查询在线状态</Button>
+        <Button onClick={handleGetLocation}>获取位置</Button>
+        <Button onClick={fetchDeviceDetail}>刷新</Button>
         <Button danger onClick={handleDeleteDevice}>删除设备</Button>
       </Space>
     }>
@@ -110,19 +86,8 @@ const DeviceDetail = () => {
         <Descriptions.Item label="操作系统版本">{device.os_version}</Descriptions.Item>
         <Descriptions.Item label="软件版本">{device.software_version}</Descriptions.Item>
         <Descriptions.Item label="状态">{device.status}</Descriptions.Item>
-        {onlineStatus && (
-          <>
-            <Descriptions.Item label="JPush在线状态" span={2}>
-              {onlineStatus.online ? <Tag color="green">在线</Tag> : <Tag color="red">离线</Tag>}
-            </Descriptions.Item>
-            {onlineStatus.alias && (
-              <Descriptions.Item label="JPush Alias">{onlineStatus.alias}</Descriptions.Item>
-            )}
-            {onlineStatus.tags && (
-              <Descriptions.Item label="JPush Tags">{onlineStatus.tags.join(', ')}</Descriptions.Item>
-            )}
-          </>
-        )}
+        <Descriptions.Item label="纬度">{device.latitude || 'N/A'}</Descriptions.Item>
+        <Descriptions.Item label="经度">{device.longitude || 'N/A'}</Descriptions.Item>
       </Descriptions>
     </Card>
   );

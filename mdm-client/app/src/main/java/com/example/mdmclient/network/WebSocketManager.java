@@ -38,6 +38,7 @@ public class WebSocketManager {
 
     public void sendMessage(String message) {
         if (webSocket != null) {
+            Log.i(TAG, "sendMessage to server: " + message.toString());
             webSocket.send(message);
         }
     }

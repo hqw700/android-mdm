@@ -31,7 +31,7 @@ class DeviceDeleteView(generics.DestroyAPIView):
     lookup_field = 'device_id'
 
 class SendCommandView(APIView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         target_type = request.data.get('target_type')
         target = request.data.get('target')
         command_data = request.data.get('command')

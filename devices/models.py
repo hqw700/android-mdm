@@ -11,6 +11,8 @@ class Device(models.Model):
     mac_address = models.CharField(max_length=17, blank=True, null=True, verbose_name="Mac地址")
     os_version = models.CharField(max_length=50, blank=True, null=True, verbose_name="操作系统版本")
     software_version = models.CharField(max_length=50, blank=True, null=True, verbose_name="软件版本")
+    latitude = models.FloatField(blank=True, null=True, verbose_name="纬度")
+    longitude = models.FloatField(blank=True, null=True, verbose_name="经度")
     
     # 状态信息
     status = models.CharField(max_length=20, default='online', verbose_name="状态") # 例如：online, offline, pending
